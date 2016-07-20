@@ -11,6 +11,7 @@ function haikuGenerator(structure) {
 		cmuDictFile = fs.readFileSync('./cmudict.txt').toString(),
 		library = parseCmuDict(),
 		markov_library = markovDict(),
+		poem_line = "";
 		return_poem = "",
 		first_word = "";
 
@@ -65,10 +66,10 @@ function haikuGenerator(structure) {
 			//NOTE: Copyright Info/'Boilerplate' paragraphs were removed to reduce the amount of non-fiction language.
 
 			//Adds 'Pride and Prejudice' to the book array input for 'markov_library'
-			var pride_text = fs.readFileSync('./pg1342.txt').toString();
-			addBook(pride_text);
+			//var pride_text = fs.readFileSync('./pg1342.txt').toString();
+			//ddBook(pride_text);
 			//Adds 'A Tale of Two Cities' to the book array input for 'markov_library'
-			var tale_text = fs.readFileSync('./pg98.txt').toString();
+			/*var tale_text = fs.readFileSync('./pg98.txt').toString();
 			addBook(tale_text);
 			//Adds 'Metamorphosis' to the book array input for 'markov_library'
 			var meta_text = fs.readFileSync('./pg5200.txt').toString();
@@ -88,7 +89,7 @@ function haikuGenerator(structure) {
 			//Adds 'Peter Pan' to the book array input for 'markov_library'
 			var peter_text = fs.readFileSync('./pg11.txt').toString();
 			addBook(peter_text);
-			//Adds 'The Jungle Book' to the book array input for 'markov_library'
+			*///Adds 'The Jungle Book' to the book array input for 'markov_library'
 			var jungle_text = fs.readFileSync('./pg236.txt').toString();
 			addBook(jungle_text);
 
@@ -105,7 +106,7 @@ function haikuGenerator(structure) {
 	}
 
 	WordChain.prototype.selectRND = function() {
-		var chain_array = [];
+		var chain_array = [], return_word = "";
 		for (var elt in this) {
 			if (this.hasOwnProperty(elt)) {
 				for (var i = 0; i < this[elt]; i++) {
@@ -113,13 +114,19 @@ function haikuGenerator(structure) {
 				}
 			}
 		}
-		return chain_array[Math.floor(Math.random() * chain_array.length)];
+
+		return_word = chain_array[Math.floor(Math.random() * chain_array.length)];
+		while (testWord(return_word)) {
+			return_word = chain_array[Math.floor(Math.random() * chain_array.length)];
+		}
+		return return_word;
 	}
 
 	WordChain.prototype.hasWord = function(syll_count,test_str) {
 		for (var elt in this) {
-			if (this.hasOwnProperty(elt) && this.cmuLibrary.hasOwnProperty(elt))
-				if (this.wordLength(elt) <= syll_count) return true;
+			if (this.hasOwnProperty(elt) && this.cmuLibrary.hasOwnProperty(elt)) {
+				if (this.wordLength(elt) <= syll_count && !(testWord(elt))) return true;
+			}
 		}
 
 		return false;
@@ -129,38 +136,45 @@ function haikuGenerator(structure) {
 		return this.cmuLibrary[word];
 	}
 
+	function testWord(word) {
+		if (word === "") return false;
+		if (new RegExp(word).test(return_poem) || new RegExp(word).test(poem_line)) return true;
+		return false;
+	}
+
 	function wordGrabber() {
 		var keys_array = Object.keys(markov_library);
 		return keys_array[Math.floor(Math.random() * keys_array.length)];
 	}
 
 	function markovLineMaker(line_length,first_word) {
-		var	current_word = first_word,temp_word,word_length = library[first_word],
-			return_string = "";
+		var	current_word = first_word,temp_word,word_length = library[first_word];
+		poem_line = "";
 
 		while (line_length > 0) {
 
-			if (markov_library[current_word].hasWord(line_length,return_string)) {
+			if (markov_library[current_word].hasWord(line_length)) {
 
 				var markov_state = false;
 				while (markov_state == false) {
 
 					temp_word = markov_library[current_word].selectRND();
 					word_length = markov_library[current_word].wordLength(temp_word);
-					if (line_length - word_length < 0 || (new RegExp(temp_word).test(return_string))) continue;
+			
+					if (line_length - word_length < 0) continue;
 					current_word = temp_word;
 					markov_state = true;
 				}
 
-				return_string += current_word + " ";
+				poem_line += current_word + " ";
 				line_length -= word_length;
 
 			} else current_word = wordGrabber();
 
 		}
 
-		first_word = return_string.slice(0,-1).search(/\b[\W]+$/);
-		return return_string.slice(0,-1);
+		first_word = poem_line.slice(0,-1).search(/\b[\W]+$/);
+		return poem_line.slice(0,-1);
 	}  
 
 	function createHaiku(structure) {
