@@ -66,10 +66,10 @@ function haikuGenerator(structure) {
 			//NOTE: Copyright Info/'Boilerplate' paragraphs were removed to reduce the amount of non-fiction language.
 
 			//Adds 'Pride and Prejudice' to the book array input for 'markov_library'
-			//var pride_text = fs.readFileSync('./pg1342.txt').toString();
-			//ddBook(pride_text);
+			var pride_text = fs.readFileSync('./pg1342.txt').toString();
+			addBook(pride_text);
 			//Adds 'A Tale of Two Cities' to the book array input for 'markov_library'
-			/*var tale_text = fs.readFileSync('./pg98.txt').toString();
+			var tale_text = fs.readFileSync('./pg98.txt').toString();
 			addBook(tale_text);
 			//Adds 'Metamorphosis' to the book array input for 'markov_library'
 			var meta_text = fs.readFileSync('./pg5200.txt').toString();
@@ -80,7 +80,7 @@ function haikuGenerator(structure) {
 			//Adds 'Dracula' to the book array input for 'markov_library'
 			var drac_text = fs.readFileSync('./pg345.txt').toString();
 			addBook(drac_text);
-			//Adds 'Alice in Wonderlands' to the book array input for 'markov_library'
+			//Adds 'Alice in Wonderland' to the book array input for 'markov_library'
 			var alice_text = fs.readFileSync('./pg11.txt').toString();
 			addBook(drac_text);
 			//Adds 'Ulysses' to the book array input for 'markov_library'
@@ -89,7 +89,7 @@ function haikuGenerator(structure) {
 			//Adds 'Peter Pan' to the book array input for 'markov_library'
 			var peter_text = fs.readFileSync('./pg11.txt').toString();
 			addBook(peter_text);
-			*///Adds 'The Jungle Book' to the book array input for 'markov_library'
+			//Adds 'The Jungle Book' to the book array input for 'markov_library'
 			var jungle_text = fs.readFileSync('./pg236.txt').toString();
 			addBook(jungle_text);
 
