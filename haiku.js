@@ -68,10 +68,15 @@ function structureModifier(ini_structure,library) {
 	return return_array;
 }
 
-function wordGrabber(length,library) {
-	var random_word_index = Math.floor(Math.random() * library[length].length);
-	var random_word = library[length][random_word_index];
+/*function wordGrabber(length,dictionary,library) {
+	var random_word_index = Math.floor(Math.random() * dictionary[length].length);
+	var random_word = dictionary[length][random_word_index];
 	return countRegExp(random_word,/(\d)\b/g) > 0 ? random_word.slice(0,-3) : random_word;
+}*/
+
+function wordGrabber(obj) {
+	var keys_array = Object.keys(obj);
+	return keys_array[Math.floor(Math.random() * keys_array.length)];
 }
 
 	
@@ -91,20 +96,13 @@ function wordGrabber(length,library) {
 				function parseBookFile(txt_data) {
 					var dictionary = parseCMUData();
 					var book = formatBookFile(txt_data), return_obj = {};
-					var count_y = 0;
-					var count_n = 0;
 
 					for (var i = 0; i < book.length; i++) {
 						var current_word = book[i],
 							next_word = book[i + 1];
 
-							/*if (dictionary.hasOwnProperty(current_word) && dictionary.hasOwnProperty(next_word)) {
-								count_y++;
-							} else count_n++;
-							console.log("y: " + count_y + "; n: " + count_n); */
-
 							if (dictionary.hasOwnProperty(current_word)) {
-								if (!return_obj.hasOwnProperty(current_word)) return_obj[current_word] = new WordChain();
+								if (!return_obj.hasOwnProperty(current_word)) return_obj[current_word] = new WordChain(dictionary);
 								if (dictionary.hasOwnProperty(next_word)) {
 									if (!return_obj[current_word].hasOwnProperty(next_word)) {
 										return_obj[current_word][next_word] = 1;
@@ -112,10 +110,14 @@ function wordGrabber(length,library) {
 								}
 							}
 					}
+					
+					return return_obj;
 
 				}
 
-				function WordChain() {}
+				function WordChain(library) {
+					this.cmuDictionary = library;
+				}
 
 				WordChain.prototype.selectRND = function() {
 					var chain_array = [];
@@ -130,36 +132,94 @@ function wordGrabber(length,library) {
 					return chain_array[Math.floor(Math.random() * chain_array.length)];
 				}
 
+				WordChain.prototype.hasWord = function(syll_count,test_word,test_str) {
+					for (var elt in this) {
+						if (this.hasOwnProperty(elt) && this.cmuDictionary.hasOwnProperty(elt) && !(new RegExp(test_word).test(test_str)))
+							if (this.cmuDictionary[elt] <= syll_count) return true;
+					}
+
+					return false;
+				}
+
+				WordChain.prototype.wordLength = function(word) {
+					return this.cmuDictionary[word];
+				}
+
+				WordChain.prototype.listChildren = function() {
+					var return_array = [];
+					for (var elt in this) {
+						if (this.hasOwnProperty(elt)) return_array.push(elt);
+					}
+
+					return return_array;
+				}
 				function markovDict() {
 					return parseBookFile(feed_material);
 				}
 
 function markovLineMaker(line_length) {
-	var word_length = Math.floor(Math.random() * line_length) + 1,
-		markov_library = markovDict(),
-		library = formatCMUData(cmuDictFile),
-		dictionary = parseCMUData(),
-		current_word = wordGrabber(word_length,library),
-		current_obj,
-		test,
-		return_string = "";
+	var markov_library = markovDict(),
+		library = parseCMUData(),
+		current_word,
+		temp_word,
+		word_length,
+		return_string = "", i = 0;
 
 	while (line_length > 0) {
 
-		return_string += current_word + " -> ";
-		line_length -= dictionary[current_word];
+		if (current_word == undefined) {
+			current_word = wordGrabber(markov_library);
+			word_length = library[current_word];
+		} else if (markov_library[current_word].hasWord(line_length,current_word,return_string)) {
 
-		console.log(dictionary.hasOwnProperty(current_word),markov_library.hasOwnProperty(current_word));
-
-		//console.log(markov_library);
-		console.log("current_word: ",current_word);
-		console.log("markov_library: ",markov_library[current_word]);
-
-		current_word = markov_library[current_word].selectRND();
+			var markov_state = false;
+			while (markov_state == false) {
+				temp_word = markov_library[current_word].selectRND();
+				word_length = markov_library[current_word].wordLength(temp_word);
 				
-	} 
+				if (line_length - word_length < 0 || new RegExp(current_word).test(return_string)) continue;
+				current_word = temp_word;
+				markov_state = true;
+			}
 
-	return return_string.slice(0,-4);
+			return_string += current_word + " ";
+			line_length -= word_length;
+
+		} else current_word = wordGrabber(markov_library);
+
+		//console.log("Return_string: " + return_string + "; line_length: " + line_length);
+
+	}
+
+		//console.log("\n\ncurrent_word: ",current_word);
+		//console.log("dictionary[word].has(): ",library.hasOwnProperty(current_word));
+		//console.log("markov_library[word].inDictionary: ",markov_library[current_word].inLibrary(library));
+		/*current_word = markov_library[current_word].selectRND();
+		word_length = library[current_word]; */
+		//console.log(library[current_word]);
+		//console.log(markov_library);
+		//console.log("current_word: ",current_word);
+		//console.log("markov_library: ",markov_library[current_word]);
+
+		/*try {
+			current_word = markov_library[current_word].selectRND();
+		} catch(error) {
+			console.log("\nERROR: CHILD NOT IN MARKOV LIBRARY\n")
+		} finally {
+			return return_string.slice(0,-4);
+		} 
+
+		if (!markov_library[current_word].inLibrary(library)) {	
+			current_word = wordGrabber(word_length,dictionary,library);
+			continue;
+		} else {
+
+			return_string += current_word + " -> ";
+			line_length -= library[current_word];
+			current_word = markov_library[current_word] && markov_library[current_word].selectRND();
+		} */
+
+	return return_string.slice(0,-1);
 }  
 
 function createHaiku(structure) {
@@ -181,10 +241,8 @@ function createHaiku(structure) {
 		return_poem += markovLineMaker(structure[i]) + '\n\n';
 	}
 
-	return return_poem.slice(0,-1);
+	return return_poem.slice(0,-2);
 }
-
-markovLineMaker(5);
 
 module.exports = {
 	createHaiku: createHaiku,
