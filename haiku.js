@@ -60,7 +60,7 @@ function haikuGenerator(structure) {
 		}
 
 		function formatBookFile() {
-			var return_array = [],match,word_reg = /\b([\w]+)\b/g;
+			var return_array = [],match,word_reg = /\b([\w']+)\b/g;
 
 			function addBook(book_text) {
 				while (match = word_reg.exec(book_text)) {
